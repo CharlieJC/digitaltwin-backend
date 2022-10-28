@@ -1,19 +1,40 @@
-FROM node:16
+# https://github.com/Sanjeev-Thiyagarajan/docker-typescript/blob/main/Dockerfile
+# Installs Node.js image
+FROM node:16-alpine AS build
 
-# Create app directory
+# sets the working directory for any RUN, CMD, COPY command
+# all files we put in the Docker container running the server will be in /usr/src/app (e.g. /usr/src/app/package.json)
 WORKDIR /usr/src/app
 
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
-COPY package*.json ./
+COPY package*.json .
 
+# Installs all packages
 RUN npm install
-# If you are building your code for production
-# RUN npm ci --only=production
-
-# Bundle app source
+# Copies everything
 COPY . .
 
-EXPOSE 8080
-CMD [ "node", "server.js" ]
+RUN npm run build
+
+####################
+####################
+
+
+FROM node:16-alpine as production
+
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+
+WORKDIR /usr/src/app
+
+COPY ["package*.json", ".env", "./"]
+
+RUN npm ci --only=production
+
+COPY --from=build /usr/src/app/build ./build
+
+#better practice to run node directly instead of a script in production
+CMD ["node","build/server.js"]
+
+####################
+####################
+

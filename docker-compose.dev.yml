@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+    #path to dockerfile
+      context: .
+    #stage we want to stop at
+      target: build
+    volumes:
+    #sync ./ on our computer to /usr/src/app in the container
+      - ./:/usr/src/app
+    #since this path is more specific it prevents the above line from overriding our node_modules
+      - /usr/src/app/node_modules
+    ports:
+    # local host port:port to listen to
+      - 5000:5000
+    #override npm run build in DockerFile build stage
+    command: npm run dev
