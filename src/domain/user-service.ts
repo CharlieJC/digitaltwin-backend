@@ -14,6 +14,6 @@ export default abstract class UserService {
     username: string,
     password_hash: string
   ) {
-    this.userRepository.register(new User());
+    this.userRepository.register(new User({id, email, username, password: password_hash}));
   }
 }

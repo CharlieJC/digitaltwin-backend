@@ -1,6 +1,4 @@
 import { Request, Response, Router } from "express";
-import AuthService from "../domain/auth-service";
-import UserService from "../domain/user-service";
 import { v4 as uuidv4 } from "uuid";
 import passport = require("passport");
 import { Strategy as LocalStrategy } from "passport-local";
@@ -46,14 +44,16 @@ export default class AuthServiceHTTP implements ExpressService {
           passwordField: "password",
           passReqToCallback: true,
         },
-        (req, email, password, done) => {
-          const user: User = this.user_repository.get_from_email(email);
+        async (req, email, password, done) => {
+          const user: User | undefined = await this.user_repository.getUserFromEmail(email);
 
           if (!user) {
             done(null, false, { message: "User not found." });
+            return
           }
 
-          const valid = this.compare_password(password, user.password_hash);
+          const password_hash = user.password
+          const valid = this.compare_password(password, password_hash);
 
           if (!valid) {
             done(null, false, { message: "Invalid Password" });
@@ -80,7 +80,7 @@ export default class AuthServiceHTTP implements ExpressService {
     const password = request.params.password;
     const password_hash = this.hash_password(password);
     this.user_repository.register(
-      new User({ id, email, username, password_hash })
+      new User({ id, email, username, password: password_hash })
     );
 
     if (email && username && password)

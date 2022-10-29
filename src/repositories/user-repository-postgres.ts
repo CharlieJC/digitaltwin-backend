@@ -1,17 +1,30 @@
 import UserRepository from "../domain/user-repository";
 import User from "../domain/user";
+import { PostgresDataSource } from "./data-source-postgres";
+import { UserSchema } from "./user-schema";
 
 export default class UserRepositoryPostgress implements UserRepository {
-  register(user: User): Promise<void> {
-    throw new Error("Method not implemented.");
+
+  //Typeorm user repository
+  private userRespository = PostgresDataSource.getRepository(UserSchema)
+
+  async register(user: User): Promise<void> {
+    const persistance = this.toPersistance(user)
+    await this.userRespository.save(persistance)
   }
-  get_from_email(email: string): User {
-    throw new Error("Method not implemented.");
+  async getUserFromEmail(email: string): Promise<User|undefined> {
+    const persistance: UserSchema | null = await this.userRespository.findOneBy({email})
+    if (persistance === null) {
+      return undefined
+    }
+    return this.toDomain(persistance)
   }
-  to_domain(persistance: any) {
-    throw new Error("Method not implemented.");
+  toDomain(persistance: UserSchema): User {
+    const {id, email, username, password} = persistance
+    return new User({id, email, username, password})
   }
-  to_persistance(domain: any) {
-    throw new Error("Method not implemented.");
+  toPersistance(domain: User): UserSchema {
+    const {id, email, username, password} = domain
+    return this.userRespository.create({id, email, username,password})
   }
 }
