@@ -1,6 +1,22 @@
 version: "3.8"
 
 services:
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+  db:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5432:5432'
+    volumes: 
+      - db:/var/lib/postgresql/data
+
   api:
     build:
     #path to dockerfile
@@ -17,3 +33,8 @@ services:
       - 5000:5000
     #override npm run build in DockerFile build stage
     command: npm run dev
+    depends_on:
+      - db
+volumes:
+  db:
+    driver: local

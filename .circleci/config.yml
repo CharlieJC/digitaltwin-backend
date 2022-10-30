@@ -1,22 +1,15 @@
-version: '2.1'
+version: 2.1
+
 orbs:
-  node: circleci/node@5.0.3
-jobs:
-  test:
-    executor: node/default
-    steps:
-      - checkout
-      # - node/install-packages: npm is default
-      #     pkg-manager: npm
-      - run:
-          command: npm test
-          name: Run Mocha tests
-      - store_artifacts:
-          path: /tmp/test-results
-          destination: raw-test-output
-      - store_test_results:
-          path: /tmp/test-results
+  heroku: circleci/heroku@x.y # Use the Heroku orb in your config
+
 workflows:
-  node-tests:
-    jobs:
-      - test
+  heroku_deploy:
+  jobs:
+    - build
+    - heroku/deploy-via-git:
+        requires:
+          - build # only run deploy-via-git job if the build job has completed
+        filters:
+        branches:
+          only: main # only run deploy-via-git job on main branch

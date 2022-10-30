@@ -1,9 +1,10 @@
 import "reflect-metadata";
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import { Twin } from "./twin";
 
 @Entity()
-export class UserSchema {
-  @PrimaryGeneratedColumn('uuid')
+export class User {
+  @PrimaryGeneratedColumn("uuid")
   id!: string;
 
   @Column({ type: "varchar", length: 255, nullable: false, unique: true })
@@ -15,5 +16,6 @@ export class UserSchema {
   @Column({ type: "varchar", length: 255, nullable: false, unique: true })
   password!: string;
 
- 
+  @OneToMany(() => Twin, (twin: Twin) => twin.owner)
+  twins: Twin[];
 }
