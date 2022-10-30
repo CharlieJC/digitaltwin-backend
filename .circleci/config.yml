@@ -1,15 +1,11 @@
-version: 2.1
-
+version: "2.1"
 orbs:
-  heroku: circleci/heroku@1.2.6 # Use the Heroku orb in your config
-
+  heroku: circleci/heroku@2.0
 workflows:
   heroku_deploy:
-  jobs:
-    - build
-    - heroku/deploy-via-git:
-        requires:
-          - build # only run deploy-via-git job if the build job has completed
-        filters:
-        branches:
-          only: main # only run deploy-via-git job on main branch
+    jobs:
+      - heroku/deploy-via-git:
+          post-steps:
+            - run: your-database-migration-command
+          pre-steps:
+            - run: command-that-run-before-deploy
