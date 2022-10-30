@@ -16,5 +16,7 @@ export const AppDataSource = new DataSource({
   entities: [User, Twin],
   migrations: [],
   subscribers: [],
-  ssl: process.env.DB_SSL ? true : false,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
