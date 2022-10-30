@@ -5,11 +5,13 @@
   "main": "build/server.js",
   "scripts": {
     "build": "rimraf ./build && tsc",
-    "local": "node build/server.js",
-    "start": "npm run build && npm run local",
+    "start": "node build/server.js",
     "devtest": "ts-node-dev --poll src/server.ts",
     "dev": "nodemon -L -e ts --exec \"npm run build && npm start\"",
-    "test": "mocha --reporter mocha-junit-reporter  --reporter-options mochaFile=/tmp/test-results/results.xml"
+    "test": "mocha --reporter mocha-junit-reporter  --reporter-options mochaFile=/tmp/test-results/results.xml",
+    "heroku-prebuild": "",
+    "heroku-postbuild": "npm run build",
+    "heroku-cleanup": ""
   },
   "repository": {
     "type": "git",
