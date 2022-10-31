@@ -127,7 +127,7 @@ function registerAuthRoutes(app: any) {
               email: user.email,
             };
             const token = jwt.sign(body, process.env.JWT_SECRET);
-            return res.json({ token });
+            return res.json({ token, body });
           });
         } catch (err) {
           return next(err);
