@@ -18,11 +18,11 @@ import { TwinRoutes } from "./routes/twin-routes";
 //     origin: "http://localhost:8080",
 //   },
 // });
+const app = express();
 
 AppDataSource.initialize()
   .then(async () => {
     // create express app
-    const app = express();
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));
     app.use(cors());
@@ -148,3 +148,5 @@ function registerAuthRoutes(app: any) {
     }
   );
 }
+
+export default app;

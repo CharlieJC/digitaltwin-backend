@@ -14,7 +14,13 @@ export class UserController {
   }
 
   async save(request: Request, response: Response, next: NextFunction) {
-    return this.userRepository.save(request.body);
+    if (!request.body.email) {
+      response.status(400).json("You must pass an email!");
+    }
+    response.status(201).json({
+      message: "User is created!",
+      user: this.userRepository.save(request.body),
+    });
   }
 
   async remove(request: Request, response: Response, next: NextFunction) {
