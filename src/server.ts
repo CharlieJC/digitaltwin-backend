@@ -95,6 +95,7 @@ function registerEntityRoutes(app: any, routes: any, routePrefix: string) {
   });
 }
 
+//curl -d "email=foo@bar&username=foo&password=password" -H "Content-Type: application/x-www-form-urlencoded" -X POST https://aucklanddt.herokuapp.com/api/auth/signup
 function registerAuthRoutes(app: any) {
   //define signup route
   app.post(

@@ -18,13 +18,17 @@ passport.use(
     async (req, email, password, done) => {
       const passwordHash = await bcrypt.hash(password, 10);
       try {
-        const user = await AppDataSource.manager.save(
+        let user = await AppDataSource.manager.save(
           AppDataSource.manager.create(User, {
             username: req.body.username,
             password: passwordHash,
             email: email,
           })
         );
+
+        // password much be reducted as save doesnt support
+        user = { ...user, password: "Redacted" };
+
         return done(null, user);
       } catch (err) {
         return done(err);
@@ -58,7 +62,11 @@ passport.use(
           return done(null, false, { message: "Wrong Password" });
         }
 
-        return done(null, user, { message: "Logged in Successfully" });
+        return done(
+          null,
+          { id: user.id, email: user.email, username: user.username },
+          { message: "Logged in Successfully" }
+        );
       } catch (err) {
         return done(err);
       }

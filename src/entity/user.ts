@@ -13,7 +13,13 @@ export class User {
   @Column({ type: "varchar", length: 20, nullable: false })
   username!: string;
 
-  @Column({ type: "varchar", length: 255, nullable: false, unique: true })
+  @Column({
+    type: "varchar",
+    length: 255,
+    nullable: false,
+    unique: true,
+    select: false,
+  })
   password!: string;
 
   @OneToMany(() => Twin, (twin: Twin) => twin.owner)
