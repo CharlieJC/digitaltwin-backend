@@ -4,6 +4,7 @@ import { Strategy as localStrategy } from "passport-local";
 import { Strategy as JWTStrategy, ExtractJwt } from "passport-jwt";
 import { User } from "../entity/user";
 import { AppDataSource } from "../data-source";
+import { stringify } from "querystring";
 const bcrypt = require("bcrypt");
 
 //create new user and pass information to next middleware if successful
@@ -48,9 +49,11 @@ passport.use(
     },
     async (email: String, password: String, done: Function) => {
       try {
-        const user = await AppDataSource.getRepository(User).findOneBy({
-          email: String(email),
-        });
+        let user = await AppDataSource.getRepository(User)
+          .createQueryBuilder("user")
+          .where("user.email = :email", { email: String(email) })
+          .addSelect("user.password")
+          .getOne();
 
         if (!user) {
           return done(null, false, { message: "User not found" });
@@ -62,11 +65,8 @@ passport.use(
           return done(null, false, { message: "Wrong Password" });
         }
 
-        return done(
-          null,
-          { id: user.id, email: user.email, username: user.username },
-          { message: "Logged in Successfully" }
-        );
+        user = { ...user, password: "Redacted" };
+        return done(null, user, { message: "Logged in Successfully" });
       } catch (err) {
         return done(err);
       }

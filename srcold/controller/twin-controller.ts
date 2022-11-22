@@ -18,12 +18,10 @@ export class TwinController {
 
     if (twin.length >= 1) {
       response.status(200).json({
-        valid: true,
+        twin,
       });
     } else {
-      response.status(401).json({
-        valid: false,
-      });
+      response.status(401);
     }
   }
 

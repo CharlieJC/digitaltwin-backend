@@ -1,153 +1,52 @@
-require("dotenv").config();
-import { AppDataSource } from "./data-source";
-import express = require("express");
-import * as bodyParser from "body-parser";
-import { Request, Response } from "express";
-import { UserRoutes } from "./routes/user-routes";
+import express, { Express, Request, Response, Router } from "express";
+import "reflect-metadata";
+
+import dotenv from "dotenv";
+dotenv.config();
+import "reflect-metadata";
+import UserRepositoryPostgress from "./repositories/user/user-repository-postgres";
+import AuthServiceHTTP from "./interactors/auth-service-http";
+import { PostgresDataSource } from "./repositories/data-source-postgres";
 import cors = require("cors");
-import passport = require("passport");
-const jwt = require("jsonwebtoken");
-require("./auth/auth");
+import * as bodyParser from "body-parser";
+import TwinRepositoryPostgress from "./repositories/twin/twin-repository-postgres";
+import TwinService from "./domain/twin/twin-service";
+import TwinServiceHTTP from "./interactors/twin-service-http";
 
-import { User } from "./entity/user";
-import { TwinRoutes } from "./routes/twin-routes";
+const port = process.env.PORT;
 
-// const httpServer = require("http").createServer();
-// const io = require("socket.io")(httpServer, {
-//   cors: {
-//     origin: "http://localhost:8080",
-//   },
-// });
-const app = express();
+const app: Express = express();
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cors());
 
-AppDataSource.initialize()
-  .then(async () => {
-    // create express app
-    app.use(bodyParser.json());
-    app.use(bodyParser.urlencoded({ extended: false }));
-    app.use(cors());
-
-    // register auth routes
-    registerAuthRoutes(app);
-
-    // register express routes from defined application routes authenticated with JWT
-    registerEntityRoutes(app, UserRoutes, "/api/users");
-    registerEntityRoutes(app, TwinRoutes, "/api/twins");
-
-    // setup express app here
-    app.get("/", (req: Request, res: Response) => {
-      res.send("Welcome to digital twin API");
-    });
-
-    // start express server
-    app.listen(process.env.PORT);
-
-    console.log(
-      `Express server has started on port ${process.env.PORT}. Open http://localhost:${process.env.PORT}/ to see results`
-    );
+//init data sources
+PostgresDataSource.initialize()
+  .then(() => {
+    console.log("Postgres data Source has been initialized!");
   })
-  .catch((error) => console.log(error));
-
-function registerEntityRoutes(app: any, routes: any, routePrefix: string) {
-  routes.forEach((route: any) => {
-    if (route.auth) {
-      (app as any)[route.method](
-        routePrefix + route.route,
-        passport.authenticate("jwt", { session: false }),
-        (req: Request, res: Response, next: Function) => {
-          const result = new (route.controller as any)()[route.action](
-            req,
-            res,
-            next
-          );
-          if (result instanceof Promise) {
-            result.then((result) =>
-              result !== null && result !== undefined
-                ? res.send(result)
-                : undefined
-            );
-          } else if (result !== null && result !== undefined) {
-            res.json(result);
-          }
-        }
-      );
-    } else {
-      (app as any)[route.method](
-        routePrefix + route.route,
-        (req: Request, res: Response, next: Function) => {
-          const result = new (route.controller as any)()[route.action](
-            req,
-            res,
-            next
-          );
-          if (result instanceof Promise) {
-            result.then((result) =>
-              result !== null && result !== undefined
-                ? res.send(result)
-                : undefined
-            );
-          } else if (result !== null && result !== undefined) {
-            res.json(result);
-          }
-        }
-      );
-    }
+  .catch((err) => {
+    console.error("Error during Postgres data Source initialization", err);
   });
-}
 
-//curl -d "email=foo@bar&username=foo&password=password" -H "Content-Type: application/x-www-form-urlencoded" -X POST https://aucklanddt.herokuapp.com/api/auth/signup
-function registerAuthRoutes(app: any) {
-  //define signup route
-  app.post(
-    "/api/auth/signup",
-    passport.authenticate("signup", { session: false }),
-    async (req: Request, res: Response, next: Function) => {
-      res.json({
-        message: "Signup successful",
-        user: req.user,
-      });
-    }
-  );
+app.listen(port, () => {
+  console.log(`⚡️[server]: Server is running at https://localhost:${port}`);
+});
 
-  //define login route
-  app.post(
-    "/api/auth/login",
-    async (req: Request, res: Response, next: Function) => {
-      passport.authenticate("login", async (err, user: User, info) => {
-        try {
-          if (err || !user) {
-            return;
-          }
+app.get("/", (req: Request, res: Response) => {
+  res.send("Digital Twin API");
+});
 
-          req.login(user, { session: false }, async (error) => {
-            if (error) return next(error);
+const authRouter: Router = AuthServiceHTTP.instance.register_routes();
+const authMiddleware: any = AuthServiceHTTP.instance.middleware_jwt();
 
-            const body = {
-              id: user.id,
-              username: user.username,
-              email: user.email,
-            };
-            const token = jwt.sign(body, process.env.JWT_SECRET);
-            return res.json({ token, body });
-          });
-        } catch (err) {
-          return next(err);
-        }
-      })(req, res, next);
-    }
-  );
+const twinRepository = new TwinRepositoryPostgress();
+const twinService = new TwinServiceHTTP(twinRepository, authMiddleware);
 
-  app.get(
-    "/api/auth/isAuth",
-    passport.authenticate("jwt", { session: false }),
-    (req: Request, res: Response, next: Function) => {
-      res.json({
-        message: "You made it to the secure route",
-        user: req.user,
-        token: req.query.secret_token,
-      });
-    }
-  );
-}
+const twinRouter = twinService.register_routes();
 
-export default app;
+app.use("/api/auth", authRouter);
+app.use("/api/twin", twinRouter);
+
+// console.log(authRouter);
+// console.log(app._router);
