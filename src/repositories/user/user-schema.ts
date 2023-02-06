@@ -10,10 +10,16 @@ export class UserSchema {
   @Column({ type: "varchar", length: 255, nullable: false, unique: true })
   email!: string;
 
-  @Column({ type: "varchar", length: 20, nullable: false })
+  @Column({ type: "varchar", length: 20, nullable: false, unique: true })
   username!: string;
 
-  @Column({ type: "varchar", length: 255, nullable: false, unique: true })
+  @Column({
+    type: "varchar",
+    length: 255,
+    nullable: false,
+    unique: true,
+    select: false,
+  })
   password!: string;
 
   @OneToMany(() => TwinSchema, (twin: TwinSchema) => twin.owner)

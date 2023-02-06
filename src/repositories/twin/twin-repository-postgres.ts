@@ -7,18 +7,24 @@ export default class TwinRepositoryPostgress implements TwinRepository {
   //Typeorm user repository
   private twinRepository = PostgresDataSource.getRepository(TwinSchema);
 
-  async createNewTwin(user: Twin): Promise<void> {
-    const persistance = this.toPersistance(user);
-    await this.twinRepository.save(persistance);
+  async createNewTwin(twin: Twin): Promise<Twin | undefined> {
+    const found_twin = await this.twinRepository.findOneBy({ id: twin.id });
+    if (!found_twin) {
+      const persistance = this.toPersistance(twin);
+      await this.twinRepository.save(persistance);
+      return persistance;
+    }
+
+    return undefined;
   }
-  async getTwinsFromOwner(owner: string): Promise<Twin[] | undefined> {
+  async getTwinsFromOwner(owner: string): Promise<Twin[]> {
     const twinSchemas: TwinSchema[] | null = await this.twinRepository.find({
       where: {
         ownerId: owner,
       },
     });
     if (twinSchemas === null) {
-      return undefined;
+      return [];
     }
     let twins: Twin[] = [];
     twinSchemas.forEach((schema) => {
@@ -28,19 +34,25 @@ export default class TwinRepositoryPostgress implements TwinRepository {
     return twins;
   }
 
-  async deleteTwinWithId(id: string) {
+  async deleteTwinWithId(
+    id: string,
+    ownerId: string
+  ): Promise<Twin | undefined> {
     const twin = await this.twinRepository.findOneBy({ id });
-    if (twin != null) {
+    if (twin !== null && twin.ownerId === ownerId) {
       await this.twinRepository.remove(twin);
+      return this.toDomain(twin);
     }
+
+    return undefined;
   }
 
   toDomain(persistance: TwinSchema): Twin {
-    const { id, ownerId } = persistance;
-    return new Twin({ id, ownerId: ownerId });
+    const { id, ownerId, code } = persistance;
+    return new Twin({ id, ownerId: ownerId, code });
   }
   toPersistance(domain: Twin): TwinSchema {
-    const { id, ownerId } = domain;
-    return this.twinRepository.create({ id, ownerId: ownerId });
+    const { id, ownerId, code } = domain;
+    return this.twinRepository.create({ id, ownerId: ownerId, code });
   }
 }

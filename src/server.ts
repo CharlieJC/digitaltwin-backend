@@ -10,7 +10,6 @@ import { PostgresDataSource } from "./repositories/data-source-postgres";
 import cors = require("cors");
 import * as bodyParser from "body-parser";
 import TwinRepositoryPostgress from "./repositories/twin/twin-repository-postgres";
-import TwinService from "./domain/twin/twin-service";
 import TwinServiceHTTP from "./interactors/twin-service-http";
 
 const port = process.env.PORT;
@@ -37,8 +36,11 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Digital Twin API");
 });
 
-const authRouter: Router = AuthServiceHTTP.instance.register_routes();
-const authMiddleware: any = AuthServiceHTTP.instance.middleware_jwt();
+const userRepository = new UserRepositoryPostgress();
+const authService = new AuthServiceHTTP(userRepository);
+
+const authRouter: Router = authService.register_routes();
+const authMiddleware: any = authService.middleware_jwt();
 
 const twinRepository = new TwinRepositoryPostgress();
 const twinService = new TwinServiceHTTP(twinRepository, authMiddleware);
@@ -47,6 +49,3 @@ const twinRouter = twinService.register_routes();
 
 app.use("/api/auth", authRouter);
 app.use("/api/twin", twinRouter);
-
-// console.log(authRouter);
-// console.log(app._router);

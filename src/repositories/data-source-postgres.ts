@@ -15,4 +15,9 @@ export const PostgresDataSource = new DataSource({
   entities: [UserSchema, TwinSchema],
   migrations: [],
   subscribers: [],
+  ssl: process.env.DB_SSL
+    ? {
+        rejectUnauthorized: false,
+      }
+    : false,
 });
