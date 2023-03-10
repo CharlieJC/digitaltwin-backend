@@ -49,3 +49,8 @@ const twinRouter = twinService.register_routes();
 
 app.use("/api/auth", authRouter);
 app.use("/api/twin", twinRouter);
+
+//GOOD EXAMPLE
+//https://stackoverflow.com/questions/5049363/difference-between-repository-and-service-layer
+//CRUD repository
+//business logic specific service calls
